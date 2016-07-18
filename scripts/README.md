@@ -1,0 +1,1 @@
+Scripts need to be updated as noted in the comments, including removal of iterrows in the scraper.
