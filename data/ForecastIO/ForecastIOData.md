@@ -1,0 +1,1 @@
+ForecastIO data is stored locally in mongoDB.

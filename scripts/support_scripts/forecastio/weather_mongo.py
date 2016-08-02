@@ -1,7 +1,7 @@
 '''
 Pull daily historical weather data from forecast.io from 5/1/2013 through present day. Save the data to mongodb.
 
-Future-- stop error on the last date.
+Future development-- stop error on the last date.
 
 20160627 Nicole Donnelly
 '''

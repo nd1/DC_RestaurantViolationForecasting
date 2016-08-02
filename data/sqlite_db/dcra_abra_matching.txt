@@ -1,0 +1,32 @@
+Ran this query to join ABRA and DCRA permit info:
+
+SELECT lll.LICENSE abra_license, bbl.CUST_NUM dcra_num, bbl.TRADE_NAME trade_name, lll.CLASS abra_class, lll.ENDORSEMENTS abra_endorsements, lll.STATUS abra_status, bbl.LICENSESTATUS dcra_status, bbl.LICENSECATEGORY category, bbl.LICENSE_START_DATE dcra_start, bbl.LICENSE_EXPIRATION_DATE dcra_exp, bbl.LICENSE_ISSUE_DATE dcra_issue, bbl.SITEADDRESS address, bbl.CITY city, bbl.STATE state, bbl.ZIPCODE zip, bbl.WARD ward, bbl.ANC anc, bbl.DISTRICT mpd_dist, bbl.LATITUDE lat, bbl.LONGITUDE lng
+FROM Basic_Business_License bbl
+LEFT JOIN Liquor_License_Locations lll
+ON bbl.SITEADDRESS = lll.ADDRESS
+WHERE bbl.LICENSECATEGORY like 'Restaurant' AND bbl.LICENSESTATUS Not in ('EXPIRED', 'CANCELLED', 'LAPSED')
+
+Exported result as CSV. ** the above query is flawed due to multiple locations existing at one address and an inability to perfectly match names. The resulting table needs to be manually reviewed to correct mismatched entries. Pandas was used to drop completely duplicate rows then locations with the same abra license info were manually reviewed.
+
+Ran this query to identify ABRA licenses not matched to DCRA licenses:
+
+SELECT *
+FROM Liquor_License_Locations lll
+LEFT JOIN Basic_Business_License bbl
+ON bbl.SITEADDRESS = lll.ADDRESS
+WHERE bbl.MARADDRESSREPOSITORYID IS NULL and lll.DESCRIPTIO like 'Restaurant'
+
+Manually updated CSV file with results in second query.
+Imported resulting CSV as dcra_abra
+
+Due to issues noted with first match attempt between liquor license and dcra info, created a new table for manual review:
+
+CREATE TABLE license_match AS SELECT bbl.MARADDRESSREPOSITORYID, lll.ADDRID, bbl.TRADE_NAME bbl_trade_name, lll.TRADE_NAME lll_trade_name, lll. APPLICANT applicant, lll.LICENSE abra_license, bbl.CUST_NUM dcra_num, lll.CLASS abra_class, lll.ENDORSEMENTS abra_endorsements, lll.STATUS abra_status, bbl.LICENSESTATUS dcra_status, bbl.LICENSECATEGORY category, bbl.LICENSE_START_DATE dcra_start, bbl.LICENSE_EXPIRATION_DATE dcra_exp, bbl.LICENSE_ISSUE_DATE dcra_issue, bbl.SITEADDRESS address, bbl.CITY city, bbl.STATE state, bbl.ZIPCODE zip, bbl.WARD ward, bbl.ANC anc, bbl.DISTRICT mpd_dist, bbl.LATITUDE lat, bbl.LONGITUDE lng
+FROM Basic_Business_License bbl
+LEFT JOIN Liquor_License_Locations lll
+ON bbl.MARADDRESSREPOSITORYID = lll.ADDRID
+WHERE bbl.LICENSECATEGORY like 'Restaurant'
+
+Manually deleted items where there was not a match on bbl_trade_name and the applicant or trade name in the liquor license list.
+
+There is not enough overlap between how DCRA and ABRA reference business names to get good results with matching ABRA license data.

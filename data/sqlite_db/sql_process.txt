@@ -1,0 +1,28 @@
+Created a table:
+CREATE TABLE master_00 AS SELECT bmy.permit_id doh_id, ri.inspec_id insp_rpt, bmy.name, bmy.address, bmy.phone_num, bmy.YelpID yelp_id, bmy.lat, bmy.lon, ri.insp_date_x insp_date, ri.insp_timein, ri.insp_type, ri.crit_viol, ri.non_crit_viol, ri.crit_viol_cos, ri.crit_viol_rpt, ri.non_crit_viol_cos, ri.non_crit_viol_rpt, ri.crit_viol_tbr, ri.non_crit_viol_tbr
+FROM restaurant_inspections ri
+LEFT JOIN business_master_withyelp bmy
+ON bmy.permit_id = ri.permit_id
+WHERE bmy.YelpID NOT IN ('no_yelp', 'closed')
+ORDER BY bmy.permit_id
+
+Added yelp review data to new table master_00 as a new table:
+CREATE TABLE master_01 AS SELECT master_00.*, yd.categories yelp_cat, yd.rating yelp_rating, yd.review_count yelp_reviews
+FROM master_00
+LEFT JOIN yelp_data yd
+ON master_00.yelp_id = yd.yelpID
+WHERE yd.rating IS NOT NULL
+
+Added risk category, inspector name and badge from cleaned_report_results:
+CREATE TABLE master_02 as SELECT master_01.*, crr.risk, crr.insp_name, crr.insp_badge
+FROM master_01
+LEFT JOIN cleaned_report_results as crr
+ON master_01.insp_rpt = crr.report_id
+
+Added license info scraped from heath report:
+CREATE TABLE master_03 AS SELECT master_02.*, li. license_number
+FROM master_02
+LEFT JOIN license_info li
+ON master_02.insp_rpt = li.report_id
+
+Exported master_03. Looking at matching with dcra_abra. See dcra_abra notes.

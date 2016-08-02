@@ -1,6 +1,8 @@
-'''Dumps the issues in the json file returned fom the SeeClickFix api for easier loading to MongoDB. Then loads the files to one collection in mongo.
+'''
+Dumps the issues in the json file returned fom the SeeClickFix api for easier loading to MongoDB. Then loads the files to one collection in mongo.
 
-20160618 Nicole Donnelly'''
+20160618 Nicole Donnelly
+'''
 
 import json
 import os
