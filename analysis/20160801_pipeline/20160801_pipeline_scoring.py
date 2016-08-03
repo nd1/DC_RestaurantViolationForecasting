@@ -10,7 +10,6 @@ import pandas as pd
 
 import os
 import pickle
-import time
 import warnings
 
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -22,7 +21,7 @@ from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardSc
 from sklearn.svm import LinearSVC
 
 BASE = os.path.abspath(os.path.join('.', 'data'))
-OUTPATH = os.path.abspath(os.path.join('.', 'scoring'))
+OUTPATH = os.path.abspath(os.path.join('.', 'testing'))
 LABELS=['insp_badge']
 STANDARD_FEATURES=['crit_viol', 'non_crit_viol', 'crit_viol_cos', 'crit_viol_rpt', 'non_crit_viol_cos', 'non_crit_viol_rpt', 'crit_viol_tbr', 'non_crit_viol_tbr', 'yelp_rating', 'yelp_reviews', 'risk', 'crime_count', '311_count', 'construction_count', 'avg_high_temp', 'time_diff', 'prev_crit_viol']
 NO_SCALE=['Burgers', 'Convenience Stores', 'Sandwiches', 'Wine & Spirits', 'adultentertainment', 'afghani', 'african', 'apartments', 'asianfusion', 'bagels', 'bakeries', 'bangladeshi', 'bars', 'bbq', 'beerbar', 'beergardens', 'belgian', 'brasseries', 'breakfast_brunch', 'breweries', 'british', 'buffets', 'burgers', 'burmese', 'cafes', 'cafeteria', 'cajun', 'catering', 'cheesesteaks', 'chicken_wings', 'chinese',  'chocolate', 'churches', 'cocktailbars', 'coffee', 'coffeeroasteries', 'comfortfood', 'cookingschools', 'creperies', 'cuban', 'cupcakes', 'danceclubs', 'delis', 'desserts', 'diners', 'discountstore', 'divebars', 'donuts', 'drugstores', 'ethiopian', 'ethnicmarkets', 'falafel', 'foodtrucks', 'french', 'gastropubs', 'gelato', 'german', 'gluten_free', 'golf', 'gourmet', 'greek', 'grocery', 'gyms', 'halal', 'healthtrainers', 'hookah_bars', 'hotdog', 'hotdogs', 'hotels', 'icecream', 'indpak', 'irish', 'irish_pubs', 'italian', 'japanese', 'jazzandblues', 'juicebars', 'korean', 'landmarks', 'latin', 'lawyers', 'lebanese', 'libraries', 'lounges', 'mediterranean', 'mexican', 'mideastern', 'mini_golf', 'modern_european', 'musicvenues',  'newamerican', 'nonprofit', 'pakistani', 'peruvian', 'pianobars', 'pizza', 'publicservicesgovt', 'pubs', 'puertorican', 'restaurants', 'salad', 'salvadoran', 'sandwiches', 'seafood', 'social_clubs', 'soulfood', 'soup', 'southern', 'spanish', 'sports_clubs', 'sportsbars', 'steak', 'sushi', 'tapas', 'tapasmallplates', 'tea', 'tex-mex', 'thai', 'tobaccoshops', 'tradamerican', 'turkish', 'vegetarian', 'venues', 'vietnamese', 'wholesale_stores', 'wine_bars']
@@ -41,18 +40,10 @@ class ColumnSelector(BaseEstimator, TransformerMixin):
         """
         return df[self.column_names]
 
-def generate_dataset(df, y=None):
-    """
-    Function to finalize dataset. Removes categorical features and drops numeric ones that will not be used.
-    """
-    df = df.loc[:, df.dtypes != object]
-    for col in df.columns:
-        if len(df[col].unique()) == df.shape[0]:
-            df.drop(col, axis=1, inplace=True)
-    df.drop(['doh_id', 'lat', 'lon', 'license_number'], axis=1, inplace=True)
-    return df
-
 def load_model(path):
+    """
+    Load the pickled model.
+    """
     with open(path, 'rb') as f:
         return pickle.load(f)
 
@@ -119,8 +110,6 @@ def roc_curve_single_class(Y_test, Y_score, model_label):
 
 def model_scoring(data, pickled_estimator, label):
 
-    start  = time.time()
-
     X = data.ix[:, 0:-1]
     y = data.ix[:,-1]
     locations = data[['yelp_id']]
@@ -129,9 +118,6 @@ def model_scoring(data, pickled_estimator, label):
 
     y_pred = model.predict(X)
     y_pp = model.decision_function(X)
-
-    #print model.named_steps['feature_selection'].get_support()
-    #print model.named_steps['features'].keys()
 
     print "Accuracy Score: ", round(accuracy_score(y, y_pred), 3)
     print "F1 Score: ", round(f1_score(y, y_pred), 3)
@@ -158,7 +144,12 @@ if __name__ == '__main__':
     warnings.filterwarnings("ignore")
     os.system('clear')
 
+    """
+    Load the out of sample dataset and model it with different models pickled in the evaluation process.
+    """
     OOS = os.path.join(BASE, 'oos.csv')
     oos_data = pd.read_csv(OOS)
 
     model_scoring(oos_data, 'output/sgdclassifier_linearsvc.pickle', "SGD-LinearSVC")
+
+    model_scoring(oos_data, 'output/logisticregressioncv_linearsvc.pickle', "LogReg-LinearSVC")

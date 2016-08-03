@@ -45,17 +45,6 @@ class ColumnSelector(BaseEstimator, TransformerMixin):
         """
         return df[self.column_names]
 
-def generate_dataset(df, y=None):
-    """
-    Function to finalize dataset. Removes categorical features and drops numeric ones that will not be used.
-    """
-    df = df.loc[:, df.dtypes != object]
-    for col in df.columns:
-        if len(df[col].unique()) == df.shape[0]:
-            df.drop(col, axis=1, inplace=True)
-    df.drop(['doh_id', 'lat', 'lon', 'license_number'], axis=1, inplace=True)
-    return df
-
 def model_selection(train_data, feature_model, model_estimator, fse_label, model_label):
 
     """
@@ -69,7 +58,6 @@ def model_selection(train_data, feature_model, model_estimator, fse_label, model
     y = train_data.ix[:,-1]
 
     model = Pipeline([
-        ('columns', FunctionTransformer(generate_dataset, validate=False)),
         ('features', FeatureUnion([
                     ('standard', Pipeline([
                                 ('select', ColumnSelector(STANDARD_FEATURES)),
