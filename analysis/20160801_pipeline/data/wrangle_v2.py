@@ -20,14 +20,19 @@ def time_diff_computation(X):
     X.time_diff = [x.days for x in X.time_diff]
     return X
 
-def prev_crit_viol(X):
+def prev_viol(X):
     '''
-    Add the count of previous critical violations on last inspection to the dataframe. If there is no previous inspection data, set the value to 0.
+    Add the count of previous violtions on the last report. If there is no previous inspection data, set the value to 0.
     '''
     X.insp_date = pd.to_datetime(X.insp_date).dt.date
-    X.sort_values(by=['yelp_id', 'insp_date'], ascending=[True, False], inplace=True)
-    X['prev_crit_viol'] = X.groupby('yelp_id', sort=False)['crit_viol'].shift(-1)
-    X['prev_crit_viol'] = X['prev_crit_viol'].fillna(0)
+    X.sort_values(by=['yelp_id', 'insp_date'], ascending=[True, True], inplace=True)
+    violations = ['crit_viol', 'non_crit_viol', 'crit_viol_cos', 'crit_viol_rpt', 'non_crit_viol_cos', 'non_crit_viol_rpt', 'crit_viol_tbr', 'non_crit_viol_tbr']
+
+    for x in violations:
+        col_name = 'prev_' + x
+        X[col_name] = X.groupby('yelp_id', sort=False)[x].shift(-1)
+        X[col_name] = X[col_name].fillna(0)
+
     return X
 
 def create_target(X):
@@ -69,7 +74,7 @@ def create_datasets(df, dummies='no'):
     #create a dataframe with the time_diff column
     df = time_diff_computation(df)
     #add the prev_crit_viol column
-    df = prev_crit_viol(df)
+    df = prev_viol(df)
     #convert yelp data to dummies
     df = yelp_dummies(df)
     #create the target value
