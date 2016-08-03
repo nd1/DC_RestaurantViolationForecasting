@@ -1,5 +1,6 @@
 '''
 Score the model with out of sample data.
+Incorporates code from Jonathan Boyle for plotting/ assement.
 
 Nicole Donnelly 20160802
 '''

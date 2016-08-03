@@ -1,3 +1,11 @@
+'''
+Model the data with KNeighborsClassifier
+
+Incorporates code from Jonathan Boyle for plotting/ assement.
+
+Nicole Donnelly 20160716
+'''
+
 import os
 
 import matplotlib.pyplot as plt
@@ -13,7 +21,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn_pandas import DataFrameMapper
 
-#from wrangle import *
 
 def feature_selection(X, y, dataset):
     #use random forest to select features
