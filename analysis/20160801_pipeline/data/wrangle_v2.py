@@ -10,7 +10,7 @@ import pandas as pd
 
 def time_diff_computation(X):
     '''
-    Convert date values to date, sort the dataframe and use groupby to put the instances together for computation. The latest inspection will end up with NaT in the time_diff column. Compute the time difference between 6/14/16 and the last inspection.
+    Convert date values to date, sort the dataframe and use groupby to put the instances together for computation. The earliest inspection will end up with NaT in the time_diff column. Set that time difference to 0.
     '''
 
     X.insp_date = pd.to_datetime(X.insp_date).dt.date
