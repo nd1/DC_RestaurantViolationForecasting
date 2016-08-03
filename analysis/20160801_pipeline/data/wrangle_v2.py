@@ -14,9 +14,9 @@ def time_diff_computation(X):
     '''
 
     X.insp_date = pd.to_datetime(X.insp_date).dt.date
-    X.sort_values(by=['yelp_id', 'insp_date'], ascending=[True, False], inplace=True)
+    X.sort_values(by=['yelp_id', 'insp_date'], ascending=[True, True], inplace=True)
     X['time_diff'] = X.groupby('yelp_id', sort=False)['insp_date'].diff()
-    X.loc[X.time_diff.isnull(), 'time_diff'] = pd.to_timedelta(X.insp_date - datetime.date(year=2016,month=6,day=14))
+    X.loc[X.time_diff.isnull(), 'time_diff'] = 0
     X.time_diff = [x.days for x in X.time_diff]
     return X
 
