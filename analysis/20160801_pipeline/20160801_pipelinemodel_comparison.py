@@ -127,7 +127,7 @@ def model_selection(train_data, feature_model, model_estimator, fse_label, model
 def model_noft_selection(train_data, model_estimator, model_label):
 
     """
-    Test various combinations of estimators for feature selection and modeling.
+    Test various estimators for modeling, without feature selection.
     The pipeline generates the dataset, encodes columns based on the information they contain, then uses the encoded results for feature selection. Finally,
     the selected features are sent to the estimator model for scoring.
     """
