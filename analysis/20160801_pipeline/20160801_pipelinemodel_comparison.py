@@ -57,18 +57,31 @@ def model_selection(train_data, feature_model, model_estimator, fse_label, model
     X = train_data.ix[:, 0:-1]
     y = train_data.ix[:,-1]
 
-    model = Pipeline([
-        ('features', FeatureUnion([
-            ('standard', Pipeline([
-                ('select', ColumnSelector(STANDARD_FEATURES)),
-                ('preprocessing', StandardScaler())])),
-            ('labels', Pipeline([
-                ('select', ColumnSelector(LABELS)),
-                ('preprocessing', OneHotEncoder())])),
-            ('no_scale', ColumnSelector(NO_SCALE))
-                    ])),
-        ('feature_selection', SelectFromModel(feature_model)),
-        ('estimator', model_estimator)])
+    if feature_model == 'none':
+        model = Pipeline([
+            ('features', FeatureUnion([
+                ('standard', Pipeline([
+                    ('select', ColumnSelector(STANDARD_FEATURES)),
+                    ('preprocessing', StandardScaler())])),
+                ('labels', Pipeline([
+                    ('select', ColumnSelector(LABELS)),
+                    ('preprocessing', OneHotEncoder())])),
+                ('no_scale', ColumnSelector(NO_SCALE))
+                        ])),
+            ('estimator', model_estimator)])
+    else:
+        model = Pipeline([
+            ('features', FeatureUnion([
+                ('standard', Pipeline([
+                    ('select', ColumnSelector(STANDARD_FEATURES)),
+                    ('preprocessing', StandardScaler())])),
+                ('labels', Pipeline([
+                    ('select', ColumnSelector(LABELS)),
+                    ('preprocessing', OneHotEncoder())])),
+                ('no_scale', ColumnSelector(NO_SCALE))
+                        ])),
+            ('feature_selection', SelectFromModel(feature_model)),
+            ('estimator', model_estimator)])
 
     """
     Train and test the model using StratifiedKFold cross validation. Compile the scores for each iteration of the model.
@@ -124,84 +137,6 @@ def model_selection(train_data, feature_model, model_estimator, fse_label, model
 
     return data
 
-def model_noft_selection(train_data, model_estimator, model_label):
-
-    """
-    Test various estimators for modeling, without feature selection.
-    The pipeline generates the dataset, encodes columns based on the information they contain, then uses the encoded results for feature selection. Finally,
-    the selected features are sent to the estimator model for scoring.
-    """
-    start  = time.time()
-
-    X = train_data.ix[:, 0:-1]
-    y = train_data.ix[:,-1]
-
-    model = Pipeline([
-        ('features', FeatureUnion([
-            ('standard', Pipeline([
-                ('select', ColumnSelector(STANDARD_FEATURES)),
-                ('preprocessing', StandardScaler())])),
-            ('labels', Pipeline([
-                ('select', ColumnSelector(LABELS)),
-                ('preprocessing', OneHotEncoder())])),
-            ('no_scale', ColumnSelector(NO_SCALE))
-                    ])),
-        ('estimator', model_estimator)])
-
-    """
-    Train and test the model using StratifiedKFold cross validation. Compile the scores for each iteration of the model.
-    """
-    scores = {'accuracy':[], 'auc':[], 'f1':[], 'precision':[], 'recall':[]}
-    for train, test in StratifiedKFold(y, n_folds=12, shuffle=True):
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10)
-
-        model.fit(X_train, y_train)
-        expected  = y_test
-        predicted = model.predict(X_test)
-
-        scores['accuracy'].append(accuracy_score(expected, predicted))
-        scores['f1'].append(f1_score(expected, predicted, average='binary'))
-        scores['precision'].append(precision_score(expected, predicted, average='binary'))
-        scores['recall'].append(recall_score(expected, predicted, average='binary'))
-
-        """
-        AUC cannot be computed if only 1 class is represented in the data. When that happens, record an AUC score of 0.
-        """
-        try:
-            scores['auc'].append(roc_auc_score(expected, predicted))
-        except:
-            scores['auc'].append(0)
-
-    """
-    Print the modeling details and the mean score.
-    """
-    print "\nBuild and Validation of took {:0.3f} seconds\n".format(time.time()-start)
-    print "Feature Selection Estimator: none"
-    print "Estimator Model: {}\n".format(model_label)
-    print "Validation scores are as follows:\n"
-    print pd.DataFrame(scores).mean()
-
-    """
-    Create a data frame with the mean score and estimator details.
-    """
-    data = pd.DataFrame(scores).mean()
-    data['SelectFromModel'] =  'none'
-    data['Estimator']  = model_label
-
-    """
-    Write official estimator to disk
-    """
-    estimator = model
-    estimator.fit(X,y)
-
-    outpath = os.path.join(OUTPATH + "/", model_label.lower().replace(" ", "-") + ".pickle")
-    with open(outpath, 'w') as f:
-        pickle.dump(estimator, f)
-
-    print "\nFitted model written to:\n{}".format(os.path.abspath(outpath))
-
-    return data
-
 if __name__ == '__main__':
 
     """
@@ -215,6 +150,17 @@ if __name__ == '__main__':
     train_data = pd.read_csv(TRAIN)
 
     evaluation = pd.DataFrame()
+    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, "none", LogisticRegression(), "none", "LogisticRegression")).T)
+    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, "none", KNeighborsClassifier(), "none", "KNeighborsClassifier")).T)
+    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, "none", BaggingClassifier(KNeighborsClassifier()), "none", "BaggedKNeighborsClassifier")).T)
+    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, "none", RandomForestClassifier(), "none", "RandomForestClassifier")).T)
+    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, "none", ExtraTreesClassifier(), "none", "ExtraTreesClassifier")).T)
+    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, "none", SGDClassifier(), "none", "SGDClassifier")).T)
+    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, "none", SGDClassifier(), "none", "SGDClassifier")).T)
+    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, "none", LinearSVC(), "none", "LinearSVC")).T)
+    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, "none", LinearSVC(), "none", "LinearSVC")).T)
+    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, "none", AdaBoostClassifier(), "none", "AdaBoostClassifier")).T)
+
     evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, ElasticNetCV(), LogisticRegression(), "ElasticNetCV", "LogisticRegression")).T)
     evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, LogisticRegressionCV(), LogisticRegression(), "LogisticRegressionCV", "LogisticRegression")).T)
     evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, LinearSVC(), LogisticRegression(), "LinearSVC", "LogisticRegression")).T)
@@ -263,21 +209,6 @@ if __name__ == '__main__':
     evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, SGDClassifier(), AdaBoostClassifier(), "SGDClassifier", "AdaBoostClassifier")).T)
     evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, RandomForestClassifier(), AdaBoostClassifier(), "RandomForestClassifier", "AdaBoostClassifier")).T)
 
-    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, ElasticNetCV(), SVC(), "ElasticNetCV", "SVC")).T)
-    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, LogisticRegressionCV(), SVC(), "LogisticRegressionCV", "SVC")).T)
-    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, LinearSVC(), SVC(), "LinearSVC", "SVC")).T)
-    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, SGDClassifier(), SVC(), "SGDClassifier", "SVC")).T)
-    evaluation = evaluation.append(pd.DataFrame(model_selection(train_data, RandomForestClassifier(), SVC(), "RandomForestClassifier", "SVC")).T)
-
-    evaluation = evaluation.append(pd.DataFrame(model_noft_selection(train_data, LogisticRegression(), "LogisticRegression")).T)
-    evaluation = evaluation.append(pd.DataFrame(model_noft_selection(train_data, KNeighborsClassifier(), "KNeighborsClassifier")).T)
-    evaluation = evaluation.append(pd.DataFrame(model_noft_selection(train_data, BaggingClassifier(KNeighborsClassifier()), "BaggedKNeighborsClassifier")).T)
-    evaluation = evaluation.append(pd.DataFrame(model_noft_selection(train_data, RandomForestClassifier(), "RandomForestClassifier")).T)
-    evaluation = evaluation.append(pd.DataFrame(model_noft_selection(train_data, ExtraTreesClassifier(), "ExtraTreesClassifier")).T)
-    evaluation = evaluation.append(pd.DataFrame(model_noft_selection(train_data, SGDClassifier(), "SGDClassifier")).T)
-    evaluation = evaluation.append(pd.DataFrame(model_noft_selection(train_data, LinearSVC(), "LinearSVC")).T)
-    evaluation = evaluation.append(pd.DataFrame(model_noft_selection(train_data, AdaBoostClassifier(), "AdaBoostClassifier")).T)
-    evaluation = evaluation.append(pd.DataFrame(model_noft_selection(train_data, SVC(), "SVC")).T)
 
     outpath = os.path.join(OUTPATH + "/" + "model_comparison.csv")
     evaluation.to_csv(outpath, index=False)
