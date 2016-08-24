@@ -1,0 +1,16 @@
+,YelpCats,,,,,
+,asis,,50/50,,75/25,
+Metric,LogisticRegression,KNN,LogisticRegression,KNN,LogisticRegression,KNN
+roc_auc,0.52,0.52,0.6,0.57,0.6,0.55
+gridsearch_score,0.94,0.94,0.57,0.58,0.73,0.74
+accuracy_score,0.93,0.95,0.56,0.56,0.69,0.73
+f1_score,0.96,0.97,0.61,0.58,0,0.1
+,,,,,,
+2016 roc_auc,0.56,0.59,0.59,0.57,0.56,0.65
+2016_accuracyscore,0.93,0.93,0.57,0.59,0.78,0.79
+2016_f1_score,0.96,0.96,0.46,0.45,0,0.18
+,,,,,,
+Features selected based on rf importance of 0.01 or better!,15,,10,,9,
+,"features = ['yelp_reviews', 'time_diff', 'avg_high_temp', 'insp_badge', 'crime_count',",,"features = ['insp_badge', 'yelp_reviews', 'time_diff', 'avg_high_temp', 'crime_count',",,"features = ['insp_badge', 'time_diff', 'avg_high_temp', 'yelp_reviews', 'crime_count',",
+,"            'construction_count', 'yelp_rating', 'risk', 'mexican', 'tradamerican',",,"            'construction_count', 'yelp_rating', 'risk', 'bakeries', 'burgers']",,"            'construction_count', 'yelp_rating', 'risk', 'sandwiches']",
+,"            'breakfast_brunch', 'hotels', 'burgers', 'sandwiches', 'chinese']",,,,,
